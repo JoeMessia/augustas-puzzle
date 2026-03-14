@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="28.799999999999997" fill="#87CEEB"/>
+  <rect x="38.400000000000006" y="36.480000000000004" width="115.19999999999999" height="115.19999999999999" rx="15.36" fill="#C0392B"/>
+  <rect x="38.400000000000006" y="28.799999999999997" width="115.19999999999999" height="115.19999999999999" rx="15.36" fill="#FF6B6B"/>
+  <rect x="38.400000000000006" y="28.799999999999997" width="115.19999999999999" height="51.84" rx="15.36" fill="rgba(255,255,255,0.25)"/>
+  <text x="50%" y="96" text-anchor="middle" dominant-baseline="central" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="72.96000000000001">A</text>
+  <text x="50%" y="168.96" text-anchor="middle" dominant-baseline="central" fill="#3a3a6a" font-family="Arial,sans-serif" font-weight="800" font-size="15.36">PUZZLE</text>
+</svg>

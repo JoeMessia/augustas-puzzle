@@ -1,0 +1,22 @@
+{
+  "name": "Augusta's Little Puzzle",
+  "short_name": "Puzzle",
+  "description": "A fun letter puzzle game for toddlers",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "theme_color": "#87CEEB",
+  "background_color": "#87CEEB",
+  "icons": [
+    {
+      "src": "icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

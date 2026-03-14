@@ -1,0 +1,58 @@
+// ============================================
+// Augusta's Little Puzzle — Word List
+// ============================================
+// Add or remove words below. All words will display in UPPERCASE.
+// Keep words to 4 letters or fewer for best gameplay (AUGUSTA is the exception).
+// Just add a new string to the array to add a word!
+
+const WORD_LIST = [
+  "CAT",
+  "DOG",
+  "MOM",
+  "DAD",
+  "SUN",
+  "CUP",
+  "HAT",
+  "BUG",
+  "PIG",
+  "COW",
+  "RED",
+  "BIG",
+  "RUN",
+  "HOP",
+  "SIT",
+  "BED",
+  "BOX",
+  "FAN",
+  "MAP",
+  "PEN",
+  "JAR",
+  "VAN",
+  "ZIP",
+  "FOX",
+  "OWL",
+  "HEN",
+  "BAT",
+  "LOG",
+  "MUG",
+  "RUG",
+  "HUG",
+  "YAK",
+  "BUS",
+  "TOY",
+  "FUN",
+  "FISH",
+  "BIRD",
+  "FROG",
+  "STAR",
+  "BEAR",
+  "DUCK",
+  "BOOK",
+  "BALL",
+  "TREE",
+  "DOOR",
+  "CAKE",
+  "RAIN",
+  "MOON",
+  "AUGUSTA"
+];

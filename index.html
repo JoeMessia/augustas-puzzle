@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Augusta's Little Puzzle</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.svg">
+<link rel="apple-touch-icon" href="icons/icon-192.svg">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  font-family: 'Nunito', sans-serif;
+  background: #87CEEB;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Portrait rotation message */
+#rotate-message {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #87CEEB;
+  z-index: 10000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: #3a3a6a;
+  text-align: center;
+  padding: 40px;
+}
+
+#rotate-message .rotate-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  animation: rotateWiggle 2s ease-in-out infinite;
+}
+
+@keyframes rotateWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-20deg); }
+  75% { transform: rotate(20deg); }
+}
+
+@media (orientation: portrait) {
+  #rotate-message { display: flex; }
+  #game-container { display: none !important; }
+}
+
+/* Game container */
+#game-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Splash screen */
+#splash {
+  position: absolute;
+  inset: 0;
+  background: #87CEEB;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+#splash h1 {
+  font-size: clamp(28px, 6vw, 64px);
+  font-weight: 900;
+  color: #FF6B6B;
+  text-shadow: 3px 3px 0 #C0392B, 0 0 20px rgba(255,107,107,0.3);
+  text-align: center;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.splash-stars {
+  font-size: clamp(20px, 4vw, 48px);
+  margin-bottom: 20px;
+}
+
+.splash-star {
+  display: inline-block;
+  animation: starPulse 1.5s ease-in-out infinite;
+}
+.splash-star:nth-child(1) { color: #FFD93D; animation-delay: 0s; }
+.splash-star:nth-child(2) { color: #6BCB77; animation-delay: 0.2s; }
+.splash-star:nth-child(3) { color: #4D96FF; animation-delay: 0.4s; }
+.splash-star:nth-child(4) { color: #FF6B6B; animation-delay: 0.6s; }
+.splash-star:nth-child(5) { color: #9B59B6; animation-delay: 0.8s; }
+
+@keyframes starPulse {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.3) rotate(20deg); }
+}
+
+#play-btn {
+  font-family: 'Nunito', sans-serif;
+  font-size: clamp(28px, 5vw, 56px);
+  font-weight: 900;
+  color: white;
+  background: linear-gradient(180deg, #6BCB77 0%, #4CAF50 100%);
+  border: 5px solid #388E3C;
+  border-radius: 30px;
+  padding: 15px 60px;
+  cursor: pointer;
+  box-shadow: 0 8px 0 #2E7D32, 0 12px 20px rgba(0,0,0,0.2);
+  transition: transform 0.1s, box-shadow 0.1s;
+  text-transform: uppercase;
+}
+
+#play-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 4px 0 #2E7D32, 0 6px 10px rgba(0,0,0,0.2);
+}
+
+/* Game area */
+#game-area {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+}
+
+/* Skip button */
+#skip-btn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #888;
+  background: rgba(255,255,255,0.4);
+  border: 2px solid rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 6px 14px;
+  cursor: pointer;
+  z-index: 50;
+}
+
+/* Target area */
+#target-area {
+  display: flex;
+  gap: clamp(6px, 1.5vw, 16px);
+  justify-content: center;
+  align-items: center;
+  margin-bottom: clamp(15px, 4vh, 40px);
+  flex-shrink: 0;
+}
+
+.target-slot {
+  width: clamp(60px, 12vw, 120px);
+  height: clamp(70px, 14vw, 140px);
+  background: rgba(0,0,0,0.08);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(30px, 7vw, 70px);
+  font-weight: 900;
+  color: rgba(0,0,0,0.12);
+  box-shadow: inset 0 4px 8px rgba(0,0,0,0.12), inset 0 1px 3px rgba(0,0,0,0.08);
+  position: relative;
+  transition: all 0.3s;
+}
+
+.target-slot.filled {
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
+  visibility: hidden;
+}
+
+/* Tray */
+#tray {
+  background: rgba(255,255,255,0.35);
+  border-radius: 20px;
+  padding: clamp(8px, 2vh, 16px) clamp(12px, 3vw, 24px);
+  display: flex;
+  gap: clamp(8px, 2vw, 20px);
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: clamp(80px, 16vw, 160px);
+  box-shadow: inset 0 3px 8px rgba(0,0,0,0.08);
+  flex-shrink: 0;
+}
+
+/* Letter blocks */
+.letter-block {
+  width: clamp(60px, 12vw, 120px);
+  height: clamp(70px, 14vw, 140px);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(30px, 7vw, 70px);
+  font-weight: 900;
+  color: white;
+  text-shadow: 1px 2px 2px rgba(0,0,0,0.2);
+  cursor: grab;
+  position: relative;
+  transition: transform 0.15s, box-shadow 0.15s;
+  touch-action: none;
+  z-index: 10;
+}
+
+.letter-block::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 50%, rgba(0,0,0,0.1) 100%);
+  pointer-events: none;
+}
+
+.letter-block.dragging {
+  transform: scale(1.15);
+  z-index: 1000;
+  cursor: grabbing;
+  opacity: 0.95;
+}
+
+.letter-block.placed {
+  cursor: default;
+  position: absolute;
+  z-index: 11;
+}
+
+.letter-block.placed::before {
+  background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.05) 100%);
+}
+
+/* Wrong placement wobble */
+@keyframes wobble {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-12px) rotate(-3deg); }
+  40% { transform: translateX(10px) rotate(2deg); }
+  60% { transform: translateX(-6px) rotate(-1deg); }
+  80% { transform: translateX(4px) rotate(1deg); }
+  100% { transform: translateX(0); }
+}
+
+.letter-block.wrong {
+  animation: wobble 0.5s ease-in-out;
+}
+
+/* Snap animation */
+@keyframes snapIn {
+  0% { transform: scale(1.15); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.letter-block.snapping {
+  animation: snapIn 0.25s ease-out forwards;
+}
+
+/* Celebration overlay */
+#celebration {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  display: none;
+}
+
+#celebration.active {
+  display: block;
+}
+
+#celebration canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#yay-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: clamp(48px, 12vw, 120px);
+  font-weight: 900;
+  color: #FFD93D;
+  text-shadow: 4px 4px 0 #F39C12, 0 0 40px rgba(255,217,61,0.5);
+  z-index: 210;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#yay-text.show {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Word glow on completion */
+@keyframes wordGlow {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 10px rgba(255,255,255,0)); }
+  50% { filter: brightness(1.2) drop-shadow(0 0 20px rgba(255,255,255,0.6)); }
+}
+
+.word-complete .letter-block.placed {
+  animation: wordGlow 0.8s ease-in-out infinite;
+}
+
+/* Transition fade */
+#transition-overlay {
+  position: absolute;
+  inset: 0;
+  background: #87CEEB;
+  z-index: 300;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+
+#transition-overlay.active {
+  opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<div id="rotate-message">
+  <div class="rotate-icon">📱</div>
+  <div>Please rotate your<br>device to landscape!</div>
+</div>
+
+<div id="game-container">
+  <!-- Splash -->
+  <div id="splash">
+    <div class="splash-stars">
+      <span class="splash-star">★</span>
+      <span class="splash-star">★</span>
+      <span class="splash-star">★</span>
+      <span class="splash-star">★</span>
+      <span class="splash-star">★</span>
+    </div>
+    <h1>AUGUSTA'S<br>LITTLE PUZZLE</h1>
+    <div class="splash-stars">
+      <span class="splash-star">★</span>
+      <span class="splash-star">★</span>
+      <span class="splash-star">★</span>
+      <span class="splash-star">★</span>
+      <span class="splash-star">★</span>
+    </div>
+    <button id="play-btn">PLAY</button>
+  </div>
+
+  <!-- Game -->
+  <div id="game-area">
+    <button id="skip-btn">SKIP ▶</button>
+    <div id="target-area"></div>
+    <div id="tray"></div>
+  </div>
+
+  <!-- Celebration -->
+  <div id="celebration">
+    <canvas id="confetti-canvas"></canvas>
+    <div id="yay-text">YAY!</div>
+  </div>
+
+  <div id="transition-overlay"></div>
+</div>
+
+<script src="words.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ---- Orientation lock attempt ----
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(() => {});
+  }
+
+  // ---- Prevent zoom, context menu, selection ----
+  document.addEventListener('gesturestart', e => e.preventDefault());
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('dblclick', e => e.preventDefault());
+
+  // ---- Color palette for blocks ----
+  const BLOCK_COLORS = [
+    { bg: '#FF6B6B', border: '#C0392B', shadow: '#A93226' },
+    { bg: '#4D96FF', border: '#2471CC', shadow: '#1A5AA0' },
+    { bg: '#6BCB77', border: '#45A049', shadow: '#388E3C' },
+    { bg: '#FFD93D', border: '#D4AC0D', shadow: '#B7950B' },
+    { bg: '#FF8C42', border: '#D4691A', shadow: '#B85C15' },
+    { bg: '#9B59B6', border: '#7D3C98', shadow: '#6C3483' },
+    { bg: '#FF69B4', border: '#D4478A', shadow: '#B83C78' },
+    { bg: '#00CEC9', border: '#00A8A5', shadow: '#008B8B' },
+  ];
+
+  // ---- Web Audio sounds ----
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playTone(freq, duration, type, volume, rampDown) {
+    try {
+      const ctx = getAudioCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.value = freq;
+      gain.gain.value = volume || 0.3;
+      if (rampDown !== false) gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+    } catch(e) {}
+  }
+
+  function soundPickup() { playTone(800, 0.08, 'sine', 0.15); }
+  function soundCorrect() {
+    playTone(523, 0.1, 'sine', 0.25);
+    setTimeout(() => playTone(659, 0.1, 'sine', 0.25), 80);
+    setTimeout(() => playTone(784, 0.15, 'sine', 0.25), 160);
+  }
+  function soundWrong() { playTone(200, 0.3, 'triangle', 0.15); }
+  function soundCelebration() {
+    const notes = [523, 587, 659, 698, 784, 880, 988, 1047];
+    notes.forEach((n, i) => setTimeout(() => playTone(n, 0.15, 'sine', 0.2), i * 80));
+    // Clapping noise
+    for (let i = 0; i < 8; i++) {
+      setTimeout(() => {
+        try {
+          const ctx = getAudioCtx();
+          const bufSize = ctx.sampleRate * 0.04;
+          const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+          const data = buf.getChannelData(0);
+          for (let j = 0; j < bufSize; j++) data[j] = (Math.random() * 2 - 1) * Math.exp(-j / (bufSize * 0.2));
+          const src = ctx.createBufferSource();
+          const gain = ctx.createGain();
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.value = 3000;
+          filter.Q.value = 0.5;
+          src.buffer = buf;
+          gain.gain.value = 0.3;
+          src.connect(filter);
+          filter.connect(gain);
+          gain.connect(ctx.destination);
+          src.start();
+        } catch(e) {}
+      }, 700 + i * 200);
+    }
+  }
+
+  // ---- Speech ----
+  function speakWord(word) {
+    if (!('speechSynthesis' in window)) return;
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const letters = word.split('');
+    let delay = 400;
+    letters.forEach((letter, i) => {
+      setTimeout(() => {
+        const u = new SpeechSynthesisUtterance(letter);
+        u.rate = 0.8;
+        u.pitch = 1.3;
+        u.volume = 1;
+        synth.speak(u);
+      }, delay + i * 600);
+    });
+    setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(word);
+      u.rate = 0.75;
+      u.pitch = 1.2;
+      u.volume = 1;
+      synth.speak(u);
+    }, delay + letters.length * 600 + 300);
+  }
+
+  // ---- Word management ----
+  let remaining = [];
+  let lastWord = '';
+
+  function getNextWord() {
+    if (remaining.length === 0) {
+      remaining = [...WORD_LIST];
+      shuffle(remaining);
+    }
+    // Avoid back-to-back
+    if (remaining.length > 1 && remaining[0] === lastWord) {
+      const idx = 1 + Math.floor(Math.random() * (remaining.length - 1));
+      [remaining[0], remaining[idx]] = [remaining[idx], remaining[0]];
+    }
+    lastWord = remaining.shift();
+    return lastWord;
+  }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ---- DOM refs ----
+  const splash = document.getElementById('splash');
+  const playBtn = document.getElementById('play-btn');
+  const gameArea = document.getElementById('game-area');
+  const targetArea = document.getElementById('target-area');
+  const tray = document.getElementById('tray');
+  const skipBtn = document.getElementById('skip-btn');
+  const celebration = document.getElementById('celebration');
+  const confettiCanvas = document.getElementById('confetti-canvas');
+  const yayText = document.getElementById('yay-text');
+  const transitionOverlay = document.getElementById('transition-overlay');
+
+  // ---- Splash ----
+  playBtn.addEventListener('click', startGame);
+  playBtn.addEventListener('touchend', e => { e.preventDefault(); startGame(); });
+
+  function startGame() {
+    splash.style.display = 'none';
+    gameArea.style.display = 'flex';
+    loadWord();
+  }
+
+  // ---- Skip ----
+  skipBtn.addEventListener('click', () => loadWord());
+
+  // ---- Game state ----
+  let currentWord = '';
+  let slots = [];       // { el, letter, filled }
+  let blocks = [];      // { el, letter, placed, colorIdx, trayIndex }
+  let dragging = null;  // { block, startX, startY, offsetX, offsetY, origLeft, origTop }
+  let isCelebrating = false;
+
+  function loadWord() {
+    if (isCelebrating) return;
+    // Remove any placed blocks that were reparented to game-container
+    blocks.forEach(b => { if (b.el.parentNode) b.el.parentNode.removeChild(b.el); });
+    currentWord = getNextWord();
+    targetArea.innerHTML = '';
+    tray.innerHTML = '';
+    slots = [];
+    blocks = [];
+    dragging = null;
+    targetArea.classList.remove('word-complete');
+
+    const letters = currentWord.split('');
+
+    // Dynamically size slots for longer words
+    const count = letters.length;
+    const maxSlotW = Math.min(120, Math.floor((window.innerWidth * 0.85) / count) - 12);
+    const slotW = Math.max(50, maxSlotW);
+    const slotH = Math.round(slotW * 1.15);
+    const fontSize = Math.round(slotW * 0.55);
+
+    // Create target slots
+    letters.forEach((letter, i) => {
+      const slot = document.createElement('div');
+      slot.className = 'target-slot';
+      slot.style.width = slotW + 'px';
+      slot.style.height = slotH + 'px';
+      slot.style.fontSize = fontSize + 'px';
+      slot.textContent = letter;
+      slot.dataset.index = i;
+      slot.dataset.letter = letter;
+      targetArea.appendChild(slot);
+      slots.push({ el: slot, letter, filled: false, index: i });
+    });
+
+    // Create scrambled blocks
+    const scrambled = letters.map((letter, i) => ({ letter, origIndex: i }));
+    // Shuffle until different from original order (if possible)
+    if (scrambled.length > 1) {
+      let attempts = 0;
+      do {
+        shuffle(scrambled);
+        attempts++;
+      } while (attempts < 20 && scrambled.every((s, i) => s.origIndex === i));
+    }
+
+    scrambled.forEach((item, i) => {
+      const colorIdx = item.origIndex % BLOCK_COLORS.length;
+      const color = BLOCK_COLORS[colorIdx];
+      const block = document.createElement('div');
+      block.className = 'letter-block';
+      block.textContent = item.letter;
+      block.style.width = slotW + 'px';
+      block.style.height = slotH + 'px';
+      block.style.fontSize = fontSize + 'px';
+      block.style.background = color.bg;
+      block.style.border = `4px solid ${color.border}`;
+      block.style.boxShadow = `0 6px 0 ${color.shadow}, 0 8px 15px rgba(0,0,0,0.15)`;
+      block.dataset.letter = item.letter;
+      block.dataset.origIndex = item.origIndex;
+      block.dataset.trayIndex = i;
+
+      tray.appendChild(block);
+      blocks.push({ el: block, letter: item.letter, origIndex: item.origIndex, placed: false, colorIdx, trayIndex: i });
+
+      // Touch events
+      block.addEventListener('touchstart', onTouchStart, { passive: false });
+      block.addEventListener('mousedown', onMouseDown);
+    });
+  }
+
+  // ---- Drag & Drop ----
+  function onTouchStart(e) {
+    e.preventDefault();
+    const block = findBlock(e.target);
+    if (!block || block.placed || isCelebrating) return;
+    const touch = e.touches[0];
+    beginDrag(block, touch.clientX, touch.clientY);
+  }
+
+  function onMouseDown(e) {
+    e.preventDefault();
+    const block = findBlock(e.target);
+    if (!block || block.placed || isCelebrating) return;
+    beginDrag(block, e.clientX, e.clientY);
+  }
+
+  function findBlock(el) {
+    while (el && !el.classList.contains('letter-block')) el = el.parentElement;
+    if (!el) return null;
+    return blocks.find(b => b.el === el);
+  }
+
+  function beginDrag(block, x, y) {
+    soundPickup();
+    const rect = block.el.getBoundingClientRect();
+    // Move block to game-container for absolute positioning
+    const container = document.getElementById('game-container');
+
+    block.el.style.position = 'fixed';
+    block.el.style.left = rect.left + 'px';
+    block.el.style.top = rect.top + 'px';
+    block.el.style.zIndex = '1000';
+    block.el.classList.add('dragging');
+    container.appendChild(block.el);
+
+    dragging = {
+      block,
+      offsetX: x - rect.left,
+      offsetY: y - rect.top,
+      startRect: rect,
+    };
+  }
+
+  document.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    moveDrag(touch.clientX, touch.clientY);
+  }, { passive: false });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    moveDrag(e.clientX, e.clientY);
+  });
+
+  function moveDrag(x, y) {
+    if (!dragging) return;
+    dragging.block.el.style.left = (x - dragging.offsetX) + 'px';
+    dragging.block.el.style.top = (y - dragging.offsetY) + 'px';
+  }
+
+  document.addEventListener('touchend', e => {
+    if (!dragging) return;
+    e.preventDefault();
+    endDrag();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    endDrag();
+  });
+
+  function endDrag() {
+    if (!dragging) return;
+    const block = dragging.block;
+    block.el.classList.remove('dragging');
+
+    const blockRect = block.el.getBoundingClientRect();
+    const bCx = blockRect.left + blockRect.width / 2;
+    const bCy = blockRect.top + blockRect.height / 2;
+
+    // Find closest matching unfilled slot
+    let bestSlot = null;
+    let bestDist = Infinity;
+    const tolerance = 55;
+
+    for (const slot of slots) {
+      if (slot.filled) continue;
+      const sr = slot.el.getBoundingClientRect();
+      const sCx = sr.left + sr.width / 2;
+      const sCy = sr.top + sr.height / 2;
+      const dist = Math.hypot(bCx - sCx, bCy - sCy);
+      const maxDist = Math.max(sr.width, sr.height) / 2 + tolerance;
+      if (dist < maxDist && dist < bestDist) {
+        bestDist = dist;
+        bestSlot = slot;
+      }
+    }
+
+    if (bestSlot) {
+      // Check if letter matches
+      // For duplicate letters: any matching letter slot works
+      if (block.letter === bestSlot.letter) {
+        placeBlock(block, bestSlot);
+        dragging = null;
+        return;
+      } else {
+        // Wrong slot
+        soundWrong();
+        block.el.classList.add('wrong');
+        setTimeout(() => block.el.classList.remove('wrong'), 500);
+      }
+    }
+
+    // Return to tray
+    returnToTray(block);
+    dragging = null;
+  }
+
+  function placeBlock(block, slot) {
+    soundCorrect();
+    slot.filled = true;
+    block.placed = true;
+
+    const slotRect = slot.el.getBoundingClientRect();
+    block.el.style.left = slotRect.left + 'px';
+    block.el.style.top = slotRect.top + 'px';
+    block.el.style.width = slotRect.width + 'px';
+    block.el.style.height = slotRect.height + 'px';
+    block.el.classList.add('placed', 'snapping');
+    block.el.style.boxShadow = `0 3px 0 ${BLOCK_COLORS[block.colorIdx].shadow}, 0 4px 8px rgba(0,0,0,0.1)`;
+    block.el.style.zIndex = '11';
+
+    slot.el.classList.add('filled');
+
+    setTimeout(() => block.el.classList.remove('snapping'), 250);
+
+    // Check completion
+    if (slots.every(s => s.filled)) {
+      setTimeout(startCelebration, 300);
+    }
+  }
+
+  function returnToTray(block) {
+    // Animate back to tray position
+    block.el.style.position = '';
+    block.el.style.left = '';
+    block.el.style.top = '';
+    block.el.style.zIndex = '';
+    tray.appendChild(block.el);
+  }
+
+  // ---- Celebration ----
+  function startCelebration() {
+    isCelebrating = true;
+    targetArea.classList.add('word-complete');
+    celebration.classList.add('active');
+    soundCelebration();
+
+    // Confetti
+    const ctx = confettiCanvas.getContext('2d');
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+
+    const particles = [];
+    const colors = ['#FF6B6B','#4D96FF','#6BCB77','#FFD93D','#FF8C42','#9B59B6','#FF69B4','#00CEC9'];
+
+    // Confetti particles
+    for (let i = 0; i < 150; i++) {
+      particles.push({
+        x: Math.random() * confettiCanvas.width,
+        y: -20 - Math.random() * confettiCanvas.height * 0.5,
+        w: 6 + Math.random() * 10,
+        h: 6 + Math.random() * 10,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vx: (Math.random() - 0.5) * 4,
+        vy: 2 + Math.random() * 4,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.2,
+        shape: Math.floor(Math.random() * 3), // 0=rect, 1=circle, 2=star
+      });
+    }
+
+    // Balloons
+    const balloons = [];
+    for (let i = 0; i < 8; i++) {
+      balloons.push({
+        x: Math.random() * confettiCanvas.width * 0.8 + confettiCanvas.width * 0.1,
+        y: confettiCanvas.height + 50 + Math.random() * 100,
+        r: 25 + Math.random() * 15,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vy: -(1.5 + Math.random() * 2),
+        vx: (Math.random() - 0.5) * 0.8,
+        wobble: Math.random() * Math.PI * 2,
+      });
+    }
+
+    // Sparkles
+    const sparkles = [];
+    for (let i = 0; i < 30; i++) {
+      sparkles.push({
+        x: confettiCanvas.width * 0.2 + Math.random() * confettiCanvas.width * 0.6,
+        y: confettiCanvas.height * 0.1 + Math.random() * confettiCanvas.height * 0.3,
+        size: 2 + Math.random() * 4,
+        alpha: Math.random(),
+        speed: 0.02 + Math.random() * 0.04,
+        color: colors[Math.floor(Math.random() * colors.length)],
+      });
+    }
+
+    let frame = 0;
+    const maxFrames = 240; // ~4s at 60fps
+
+    function animate() {
+      frame++;
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+      // Draw confetti
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.05;
+        p.rotation += p.rotSpeed;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color;
+        if (p.shape === 0) {
+          ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        } else if (p.shape === 1) {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.w/2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          drawStar(ctx, 0, 0, 5, p.w/2, p.w/4);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+
+      // Draw balloons
+      balloons.forEach(b => {
+        b.y += b.vy;
+        b.wobble += 0.03;
+        b.x += Math.sin(b.wobble) * 0.5 + b.vx;
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y, b.r * 0.85, b.r, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Shine
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(b.x - b.r * 0.25, b.y - b.r * 0.25, b.r * 0.2, b.r * 0.3, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+        // String
+        ctx.strokeStyle = '#888';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(b.x, b.y + b.r);
+        ctx.lineTo(b.x + Math.sin(b.wobble) * 5, b.y + b.r + 30);
+        ctx.stroke();
+      });
+
+      // Draw sparkles
+      sparkles.forEach(s => {
+        s.alpha += s.speed;
+        const a = (Math.sin(s.alpha * Math.PI * 2) + 1) / 2;
+        ctx.fillStyle = s.color;
+        ctx.globalAlpha = a;
+        drawStar(ctx, s.x, s.y, 4, s.size, s.size * 0.4);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+
+      if (frame < maxFrames) {
+        requestAnimationFrame(animate);
+      }
+    }
+
+    animate();
+
+    // Show YAY!
+    setTimeout(() => {
+      yayText.classList.add('show');
+    }, 200);
+
+    // Speak the word
+    speakWord(currentWord);
+
+    // End celebration and load next word
+    setTimeout(() => {
+      yayText.classList.remove('show');
+      celebration.classList.remove('active');
+      targetArea.classList.remove('word-complete');
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+      // Transition
+      transitionOverlay.classList.add('active');
+      setTimeout(() => {
+        isCelebrating = false;
+        loadWord();
+        setTimeout(() => transitionOverlay.classList.remove('active'), 50);
+      }, 400);
+    }, 5000);
+  }
+
+  function drawStar(ctx, cx, cy, spikes, outerR, innerR) {
+    let rot = Math.PI / 2 * 3;
+    const step = Math.PI / spikes;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerR);
+    for (let i = 0; i < spikes; i++) {
+      ctx.lineTo(cx + Math.cos(rot) * outerR, cy + Math.sin(rot) * outerR);
+      rot += step;
+      ctx.lineTo(cx + Math.cos(rot) * innerR, cy + Math.sin(rot) * innerR);
+      rot += step;
+    }
+    ctx.lineTo(cx, cy - outerR);
+    ctx.closePath();
+  }
+
+  // ---- Handle window resize: reposition placed blocks ----
+  window.addEventListener('resize', () => {
+    if (!currentWord) return;
+    blocks.forEach(b => {
+      if (b.placed) {
+        const slot = slots.find(s => s.filled && s.letter === b.letter && s.el.classList.contains('filled'));
+        if (slot) {
+          const sr = slot.el.getBoundingClientRect();
+          b.el.style.left = sr.left + 'px';
+          b.el.style.top = sr.top + 'px';
+          b.el.style.width = sr.width + 'px';
+          b.el.style.height = sr.height + 'px';
+        }
+      }
+    });
+  });
+
+  // ---- Service Worker ----
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  }
+
+})();
+</script>
+</body>
+</html>
